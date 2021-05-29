@@ -87,8 +87,6 @@ async function verifyToken(authHeader: string): Promise<JwtPayload> {
       resolve(jwt.payload);
     });
   });
-  
-  // return undefined
 }
 
 function getToken(authHeader: string): string {

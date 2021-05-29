@@ -10,12 +10,11 @@ export async function getAllTodos(userId) {
     return await (await todoAccess.getTodos(userId)).result;
 }
 
-export async function createTodo(createTodoRequest: CreateTodoRequest, userId: string): Promise<TodoItem> {
+
+export async function createTodo(createTodoRequest: CreateTodoRequest, userId: string, attachmentUrl?): Promise<TodoItem> {
     const itemId = uuid.v4();
 
-    // const attachmentUrl = true; // work on this
-
-    let request: TodoItem = {
+    const request: TodoItem = {
         userId,
         todoId: itemId,
         createdAt: new Date().toISOString(),
@@ -24,9 +23,10 @@ export async function createTodo(createTodoRequest: CreateTodoRequest, userId: s
         done: false
     };
 
-    // if (attachmentUrl) {
-    //     request.attachmentUrl = ''; // need to get the url
-    // }
+    if (attachmentUrl) {
+        request.attachmentUrl = attachmentUrl;
+    }
+
     const result = await todoAccess.createTodo(request);
     return result.todo;
 }
@@ -39,4 +39,8 @@ export async function deleteTodo(userId, todoId: string) {
 export async function updateTodo(todoId, userId, todo: UpdateTodoRequest) {
     const result = await todoAccess.updateTodo(todoId, userId, todo);
     return result.todo;
+}
+
+export async function updateAttachmentUrl(userId, todoId, attachmentUrl) {
+    return await todoAccess.updateAttachmentUrl(userId, todoId, attachmentUrl);
 }

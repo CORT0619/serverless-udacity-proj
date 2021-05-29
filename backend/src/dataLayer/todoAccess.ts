@@ -82,6 +82,25 @@ export class TodoAccess {
             result
         };
     }
+
+    async updateAttachmentUrl(userId, todoId, attachmentUrl: string) {
+        const request = {
+            TableName: this.todosTable,
+            Key: {
+                userId,
+                todoId
+            },
+            UpdateExpression: 'set attachmentUrl=:a',
+            ExpressionAttributeValues: {
+                ":a": attachmentUrl
+            },
+            ReturnValues: 'UPDATED_NEW'
+        };
+
+        const result = await this.docClient.update(request).promise();
+        console.log('result ', result);
+        return result;
+    }
 } 
 
 function createDynamoDBClient() {
