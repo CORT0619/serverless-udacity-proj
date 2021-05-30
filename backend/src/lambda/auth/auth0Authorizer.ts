@@ -1,4 +1,4 @@
-import { CustomAuthorizerEvent, CustomAuthorizerResult } from 'aws-lambda'
+import { CustomAuthorizerResult, APIGatewayTokenAuthorizerEvent } from 'aws-lambda'
 import 'source-map-support/register'
 import { verify, decode } from 'jsonwebtoken';
 import { createLogger } from '../../utils/logger';
@@ -14,11 +14,12 @@ const jwksUrl = 'https://dev-e87hv0tz.us.auth0.com/.well-known/jwks.json';
 let response;
 
 export const handler = async (
-  event: CustomAuthorizerEvent
+  event: APIGatewayTokenAuthorizerEvent
 ): Promise<CustomAuthorizerResult> => {
   logger.info('Authorizing a user', event.authorizationToken)
   try {
-    const jwtToken = await verifyToken(event.authorizationToken)
+    const jwtToken = await verifyToken(event.authorizationToken);
+    console.log('jwtToken ', jwtToken);
     logger.info('User was authorized', jwtToken)
 
     return {
@@ -64,9 +65,9 @@ async function verifyToken(authHeader: string): Promise<JwtPayload> {
   // You should implement it similarly to how it was implemented for the exercise for the lesson 5
   // You can read more about how to do this here: https://auth0.com/blog/navigating-rs256-and-jwks/
 
-  if (!header || header.alg !== 'RS256') {
-    throw new Error('Token is not RS256 encoded');
-  }
+  // if (!header || header.alg !== 'RS256') {
+  //   throw new Error('Token is not RS256 encoded');
+  // }
 
   // get keyset
   response = await Axios.get(jwksUrl, {
@@ -75,6 +76,16 @@ async function verifyToken(authHeader: string): Promise<JwtPayload> {
     }
   });
 
+  const signingKey = response.data.keys.find(key => key.kid === header.kid);
+  console.log('signingKey ', signingKey);
+
+  let certificate = signingKey.x5c[0];
+  certificate = certificate.match(/.{1,64}/g).join('\n');
+  const certificateKey = `-----BEGIN CERTIFICATE-----\n${ certificate }\n-----END CERTIFICATE-----\n`;
+
+  const JwtPayload:JwtPayload = verify(token, certificateKey, { algorithms: ['RS256'] }) as JwtPayload;
+  return JwtPayload;
+/*
   const key = getJWKSSigningKey(header.kid);
   const actualKey = key.publicKey || key.rsaPublicKey;
   
@@ -86,7 +97,7 @@ async function verifyToken(authHeader: string): Promise<JwtPayload> {
       console.log('decoded ', decoded);
       resolve(jwt.payload);
     });
-  });
+  });*/
 }
 
 function getToken(authHeader: string): string {
@@ -100,7 +111,7 @@ function getToken(authHeader: string): string {
 
   return token;
 }
-
+/*
 
 function certToPEM(cert) {
   let pem = cert.match( /.{1,64}/g).join( '\n');
@@ -116,4 +127,4 @@ function getJWKSSigningKeys() {
   return response.data.keys.filter(key => key.use === 'sig' && key.kty === 'RSA' && key.kid && ((key.x5c && key.x5c.length) || (key.n && key.e)))[0].map(key => {
       return { kid: key.kid, nbf: key.nbf, publicKey: certToPEM(key.x5c[0]) };
   });
-}
+}*/
